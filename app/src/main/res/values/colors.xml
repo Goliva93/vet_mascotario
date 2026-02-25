@@ -2,9 +2,14 @@
 <resources>
     <color name="green_primary">#7CB342</color>
     <color name="green_primary_dark">#558B2F</color>
+    <color name="yellow_accent">#FDD835</color>
 
     <color name="text_dark">#1F2937</color>
     <color name="text_gray">#4B5563</color>
     <color name="bg_white">#FFFFFF</color>
     <color name="btn_outline_border">#D1D5DB</color>
+
+    <color name="green_light_bg">#E8F5E9</color>
+    <color name="yellow_light_bg">#FFF9C4</color>
+    <color name="gray_light_bg">#F3F4F6</color>
 </resources>
