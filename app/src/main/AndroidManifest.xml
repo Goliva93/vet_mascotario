@@ -11,13 +11,13 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Vet_Mascotario">
         <activity
-            android:name=".HomeActivity"
+            android:name=".ui.main.HomeActivity"
             android:exported="false" />
         <activity
-            android:name=".RegisterActivity"
+            android:name=".ui.login.RegisterActivity"
             android:exported="false" />
         <activity
-            android:name=".LoginActivity"
+            android:name=".ui.login.LoginActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
