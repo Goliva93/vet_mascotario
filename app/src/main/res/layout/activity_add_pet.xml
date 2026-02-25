@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F5F6FA">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="16dp">
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_arrow_back"
+                    app:tint="#171818" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Volver"
+                    android:layout_marginStart="8dp"/>
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Agregar mascota"
+                android:textSize="28sp"
+                android:textStyle="bold"
+                android:textColor="#0E1B42"
+                android:layout_marginBottom="20dp"/>
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="2dp"
+                android:layout_marginBottom="24dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="210dp"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+
+                    <ImageView
+                        android:layout_width="100dp"
+                        android:layout_height="100dp"
+                        android:background="@drawable/circle_background_outline"
+                        android:padding="25dp"
+                        android:src="@android:drawable/ic_menu_camera"
+                        app:tint="#141614" />
+
+                    <Button
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:text="Subir foto"
+                        app:cornerRadius="12dp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Nombre *" android:textStyle="bold" android:layout_marginBottom="8dp"/>
+            <EditText android:layout_width="match_parent" android:layout_height="55dp" android:hint="Ej: Max" android:background="@drawable/edittext_rounded_bg" android:paddingHorizontal="16dp" android:layout_marginBottom="16dp"/>
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Especie *" android:textStyle="bold" android:layout_marginBottom="8dp"/>
+            <Spinner android:layout_width="match_parent" android:layout_height="55dp" android:background="@drawable/edittext_rounded_bg" android:layout_marginBottom="16dp"/>
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Raza" android:textStyle="bold" android:layout_marginBottom="8dp"/>
+            <EditText android:layout_width="match_parent" android:layout_height="55dp" android:hint="Ej: Labrador" android:background="@drawable/edittext_rounded_bg" android:paddingHorizontal="16dp" android:layout_marginBottom="16dp"/>
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Sexo" android:textStyle="bold" android:layout_marginBottom="8dp"/>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="16dp">
+                <Button android:layout_width="0dp" android:layout_height="60dp" android:layout_weight="1" android:text="Macho" android:layout_marginEnd="8dp" style="@style/Widget.MaterialComponents.Button.OutlinedButton" app:cornerRadius="12dp"/>
+                <Button android:layout_width="0dp" android:layout_height="60dp" android:layout_weight="1" android:text="Hembra" style="@style/Widget.MaterialComponents.Button.OutlinedButton" app:cornerRadius="12dp"/>
+            </LinearLayout>
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Edad *" android:textStyle="bold" android:layout_marginBottom="8dp"/>
+            <EditText android:layout_width="match_parent" android:layout_height="55dp" android:hint="Ej: 3 años" android:background="@drawable/edittext_rounded_bg" android:paddingHorizontal="16dp" android:layout_marginBottom="32dp"/>
+
+            <Button
+                android:id="@+id/btn_save_pet"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:text="Guardar mascota"
+                android:backgroundTint="#83BB62"
+                app:cornerRadius="12dp"
+                android:layout_marginBottom="12dp"/>
+
+            <Button
+                android:id="@+id/btn_cancel"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:text="Cancelar"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                app:strokeColor="#B0BEC5"
+                app:cornerRadius="12dp"/>
+
+        </LinearLayout>
+    </ScrollView>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
