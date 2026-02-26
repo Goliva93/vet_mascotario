@@ -9,14 +9,14 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.google.android.material.button.MaterialButton
-import pe.goliva.vet_mascotario.R // IMPORTANTE: Asegúrate de que esto coincida con el nombre de tu paquete
+import pe.goliva.vet_mascotario.R
 
 class AppointmentCreateActivity : AppCompatActivity() {
 
-    // 1. Definimos nuestra variable de estado
+    // variable para alacenar el paso en el que se encuentra
     private var pasoActual = 1
 
-    // 2. Declaramos las vistas principales que vamos a modificar
+    // se declara las vistas a modificar
     private lateinit var contenedorPasos: FrameLayout
     private lateinit var btnContinuar: MaterialButton
     private lateinit var btnCancelarAbajo: MaterialButton
@@ -36,18 +36,17 @@ class AppointmentCreateActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_appointment_create)
 
-        // 3. Vinculamos las variables con los IDs del XML
+        // se vincula las vistas
         inicializarVistas()
 
-        // 4. Programamos los clics de los botones
         btnContinuar.setOnClickListener {
             if (pasoActual < 4) {
                 pasoActual++
                 actualizarInterfaz()
             } else {
-                // Aquí es donde en el futuro enviarás los datos a tu backend
+                // estas variables se utilizaran cuando se guarden en base de datos
                 Toast.makeText(this, "¡Cita guardada exitosamente!", Toast.LENGTH_SHORT).show()
-                finish() // Cierra la pantalla y vuelve al Home
+                finish()
             }
         }
 
@@ -56,14 +55,14 @@ class AppointmentCreateActivity : AppCompatActivity() {
                 pasoActual--
                 actualizarInterfaz()
             } else {
-                finish() // Si está en el paso 1, simplemente sale de la pantalla
+                finish()
             }
         }
 
         btnCancelarAbajo.setOnClickListener(accionAtras)
         btnAtrasArriba.setOnClickListener(accionAtras)
 
-        // 5. Cargamos la interfaz del Paso 1 al abrir la pantalla
+        // se inicializa la interfaz si cuando este en el paso 1
         actualizarInterfaz()
     }
 
@@ -85,9 +84,10 @@ class AppointmentCreateActivity : AppCompatActivity() {
     }
 
     private fun actualizarInterfaz() {
-        // A. Actualizar los textos y botones según el paso
+        // se actualizan los botones y los pasos - el pasoActual se lee de la variable global
         tvIndicadorPaso.text = "Paso $pasoActual de 4"
 
+        // se modifica el texto en base al paso que este
         if (pasoActual == 4) {
             btnContinuar.text = "Confirmar cita"
             btnCancelarAbajo.text = "Volver al inicio"
@@ -96,7 +96,7 @@ class AppointmentCreateActivity : AppCompatActivity() {
             btnCancelarAbajo.text = "Cancelar"
         }
 
-        // B. Inyectar el XML correcto en el contenedor central
+        // se muestra el contenedor en base al paso que este
         contenedorPasos.removeAllViews() // Limpiamos el paso anterior
         val layoutAInyectar = when (pasoActual) {
             1 -> R.layout.layout_step1_pet
@@ -108,12 +108,12 @@ class AppointmentCreateActivity : AppCompatActivity() {
         // Inflamos el nuevo layout y lo metemos en el contenedor
         layoutInflater.inflate(layoutAInyectar, contenedorPasos, true)
 
-        // C. Pintar el Stepper
+        // se pintan los numeros superiores para indicar en que paso se encuentra
         pintarStepper()
     }
 
     private fun pintarStepper() {
-        // Colores que definimos en colors.xml y drawables
+
         val colorVerdeActivo = ContextCompat.getDrawable(this, R.drawable.bg_stepper_active)
         val colorGrisInactivo = ContextCompat.getDrawable(this, R.drawable.bg_stepper_inactive)
         val textoBlanco = ContextCompat.getColor(this, R.color.bg_white)
@@ -121,7 +121,7 @@ class AppointmentCreateActivity : AppCompatActivity() {
         val lineaVerde = ContextCompat.getColor(this, R.color.green_primary)
         val lineaGris = android.graphics.Color.parseColor("#E5E7EB")
 
-        // Reseteamos todo a gris primero
+
         val circulos = listOf(circulo1, circulo2, circulo3, circulo4)
         circulos.forEach {
             it.background = colorGrisInactivo
@@ -131,7 +131,7 @@ class AppointmentCreateActivity : AppCompatActivity() {
         linea2_3.setBackgroundColor(lineaGris)
         linea3_4.setBackgroundColor(lineaGris)
 
-        // Pintamos de verde según el paso actual (y los anteriores)
+        // se va pintando los colores en base al paso que se encuentre
         for (i in 0 until pasoActual) {
             circulos[i].background = colorVerdeActivo
             circulos[i].setTextColor(textoBlanco)
@@ -141,7 +141,7 @@ class AppointmentCreateActivity : AppCompatActivity() {
         if (pasoActual >= 3) linea2_3.setBackgroundColor(lineaVerde)
         if (pasoActual >= 4) linea3_4.setBackgroundColor(lineaVerde)
 
-        // El botón continuar se pone verde fuerte si todo está listo
+        // el boton continuar se pone en verde si la infromación ya esta ingresada
         btnContinuar.setBackgroundColor(ContextCompat.getColor(this, R.color.green_primary))
     }
 }
