@@ -11,6 +11,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Vet_Mascotario">
         <activity
+            android:name=".ui.appointment.AppointmentCreateActivity"
+            android:exported="false" />
+        <activity
             android:name=".ui.main.HomeActivity"
             android:exported="false" />
         <activity
