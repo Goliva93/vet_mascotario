@@ -1,47 +1,41 @@
 package pe.goliva.vet_mascotario
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import pe.goliva.vet_mascotario.ui.theme.Vet_MascotarioTheme
+import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.Fragment
+import pe.goliva.vet_mascotario.databinding.ActivityMainBinding
+import pe.goliva.vet_mascotario.ui.main.appointments.AppointmentsFragment
+import pe.goliva.vet_mascotario.ui.main.home.HomeFragment
+import pe.goliva.vet_mascotario.ui.main.pets.PetsFragment
+import pe.goliva.vet_mascotario.ui.main.profile.ProfileFragment
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
+
+    private lateinit var binding: ActivityMainBinding
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContent {
-            Vet_MascotarioTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+        if (savedInstanceState == null) {
+            replaceFragment(HomeFragment())
+        }
+
+        binding.bottomNav.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.nav_home -> replaceFragment(HomeFragment())
+                R.id.nav_citas -> replaceFragment(AppointmentsFragment())
+                R.id.nav_mascotas -> replaceFragment(PetsFragment())
+                R.id.nav_profile -> replaceFragment(ProfileFragment())
             }
+            true
         }
     }
-}
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    Vet_MascotarioTheme {
-        Greeting("Android")
+    private fun replaceFragment(fragment: Fragment) {
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.fragment_container, fragment)
+            .commit()
     }
 }
