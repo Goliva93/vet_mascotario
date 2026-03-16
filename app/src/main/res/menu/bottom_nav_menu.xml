@@ -4,7 +4,7 @@
     <item
         android:id="@+id/nav_home"
         android:icon="@drawable/ic_home"
-        android:title="Home" />
+        android:title="Inicio" />
 
     <item
         android:id="@+id/nav_citas"
@@ -15,5 +15,10 @@
         android:id="@+id/nav_mascotas"
         android:icon="@drawable/ic_paw"
         android:title="Mascotas" />
+
+    <item
+        android:id="@+id/nav_profile"
+        android:icon="@drawable/ic_person"
+        android:title="Perfil" />
 
 </menu>

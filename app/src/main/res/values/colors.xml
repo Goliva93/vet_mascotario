@@ -7,13 +7,21 @@
     <color name="text_dark">#1F2937</color>
     <color name="text_gray">#4B5563</color>
     <color name="bg_white">#FFFFFF</color>
+    <color name="bg_soft">#F9FAFB</color>
     <color name="btn_outline_border">#D1D5DB</color>
 
     <color name="green_light_bg">#E8F5E9</color>
     <color name="yellow_light_bg">#FFF9C4</color>
     <color name="gray_light_bg">#F3F4F6</color>
-    <color name="blue_light_bg">#E3F2FD</color>
-    <color name="blue_primary">#1E88E5</color>
-    <color name="icon_dark_purple">#51495E</color>
-    <color name="gray_card_bg">#E2E4E9</color>
+    <color name="gray_card_bg">#E5E7EB</color>
+
+    <color name="status_success">#7CB342</color>
+    <color name="status_warning">#FDD835</color>
+    <color name="status_error">#EF5350</color>
+    <color name="status_neutral">#9CA3AF</color>
+
+    <!-- Compatibilidad temporal con nombres antiguos -->
+    <color name="blue_primary">#7CB342</color>
+    <color name="blue_light_bg">#E8F5E9</color>
+    <color name="icon_dark_purple">#558B2F</color>
 </resources>
