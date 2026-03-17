@@ -10,7 +10,6 @@ import pe.goliva.vet_mascotario.databinding.ActivitySplashBinding
 import pe.goliva.vet_mascotario.ui.login.LoginActivity
 import pe.goliva.vet_mascotario.ui.onboarding.OnboardingActivity
 import pe.goliva.vet_mascotario.utils.SessionManager
-import kotlin.jvm.java
 
 class SplashActivity : AppCompatActivity() {
 
@@ -19,6 +18,7 @@ class SplashActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         binding = ActivitySplashBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
