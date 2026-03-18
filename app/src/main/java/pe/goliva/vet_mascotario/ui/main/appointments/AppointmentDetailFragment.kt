@@ -1,10 +1,13 @@
 package pe.goliva.vet_mascotario.ui.main.appointments
 
+import android.app.AlertDialog
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.View
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import com.google.android.material.textfield.TextInputEditText
 import pe.goliva.vet_mascotario.R
 import pe.goliva.vet_mascotario.data.dao.AppointmentDao
 import pe.goliva.vet_mascotario.data.model.AppointmentDetail
@@ -41,6 +44,13 @@ class AppointmentDetailFragment : Fragment(R.layout.fragment_appointment_detail)
         loadAppointmentDetail()
     }
 
+    override fun onResume() {
+        super.onResume()
+        _binding?.let {
+            loadAppointmentDetail()
+        }
+    }
+
     private fun setupClicks() {
         binding.btnBack.setOnClickListener {
             parentFragmentManager.popBackStack()
@@ -55,11 +65,7 @@ class AppointmentDetailFragment : Fragment(R.layout.fragment_appointment_detail)
         }
 
         binding.btnCancelAppointment.setOnClickListener {
-            Toast.makeText(
-                requireContext(),
-                "Cancelar cita se implementará en la siguiente parte",
-                Toast.LENGTH_SHORT
-            ).show()
+            showCancelAppointmentDialog()
         }
     }
 
@@ -106,9 +112,68 @@ class AppointmentDetailFragment : Fragment(R.layout.fragment_appointment_detail)
             binding.tvDetailCancelReason.text = detail.cancelReason
         }
 
-        // En esta fase solo mostramos acciones para pendientes/confirmadas.
         binding.layoutDetailActions.visibility =
             if (!isCancelled && !isFinished) View.VISIBLE else View.GONE
+    }
+
+    private fun showCancelAppointmentDialog() {
+        if (currentUserId == -1L || appointmentId == -1L) {
+            Toast.makeText(requireContext(), "No se pudo cancelar la cita", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val dialogView = LayoutInflater.from(requireContext())
+            .inflate(R.layout.dialog_cancel_appointment, null, false)
+
+        val etCancelReason = dialogView.findViewById<TextInputEditText>(R.id.et_cancel_reason)
+
+        AlertDialog.Builder(requireContext())
+            .setView(dialogView)
+            .setNegativeButton("Volver", null)
+            .setPositiveButton("Cancelar cita", null)
+            .create()
+            .also { dialog ->
+                dialog.setOnShowListener {
+                    val positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+                    positiveButton.setTextColor(
+                        ContextCompat.getColor(requireContext(), R.color.status_error)
+                    )
+
+                    positiveButton.setOnClickListener {
+                        val cancelReason = etCancelReason.text?.toString()?.trim().orEmpty()
+                        cancelAppointment(dialog, cancelReason.takeIf { it.isNotBlank() })
+                    }
+                }
+                dialog.show()
+            }
+    }
+
+    private fun cancelAppointment(
+        dialog: AlertDialog,
+        cancelReason: String?
+    ) {
+        val cancelled = appointmentDao.cancelAppointmentForUser(
+            userId = currentUserId,
+            appointmentId = appointmentId,
+            cancelReason = cancelReason
+        )
+
+        if (cancelled) {
+            dialog.dismiss()
+            Toast.makeText(
+                requireContext(),
+                "Cita cancelada correctamente",
+                Toast.LENGTH_SHORT
+            ).show()
+
+            parentFragmentManager.popBackStack()
+        } else {
+            Toast.makeText(
+                requireContext(),
+                "No se pudo cancelar la cita",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
     }
 
     private fun mapStatusLabel(status: String): String {

@@ -370,6 +370,57 @@ class AppointmentDao(context: Context) {
         }
     }
 
+    fun cancelAppointmentForUser(
+        userId: Long,
+        appointmentId: Long,
+        cancelReason: String?
+    ): Boolean {
+        val db = dbHelper.writableDatabase
+        db.beginTransaction()
+
+        return try {
+            val ownerId = getOwnerIdByUserId(db, userId)
+                ?: throw IllegalStateException("No se encontró owner para el usuario")
+
+            val values = ContentValues().apply {
+                put(DatabaseContract.AppointmentTable.COL_STATUS, "CANCELLED")
+
+                if (cancelReason.isNullOrBlank()) {
+                    putNull(DatabaseContract.AppointmentTable.COL_CANCEL_REASON)
+                } else {
+                    put(DatabaseContract.AppointmentTable.COL_CANCEL_REASON, cancelReason)
+                }
+
+                put(DatabaseContract.AppointmentTable.COL_CANCELLED_AT, nowUtc())
+                put(DatabaseContract.AppointmentTable.COL_CANCELLED_BY_USER_ID, userId)
+                put(DatabaseContract.AppointmentTable.COL_UPDATED_AT, nowUtc())
+            }
+
+            val updatedRows = db.update(
+                DatabaseContract.AppointmentTable.TABLE_NAME,
+                values,
+                """
+            ${DatabaseContract.AppointmentTable.COL_APPOINTMENT_ID} = ?
+            AND ${DatabaseContract.AppointmentTable.COL_OWNER_ID} = ?
+            AND ${DatabaseContract.AppointmentTable.COL_STATUS} IN ('PENDING', 'CONFIRMED')
+            """.trimIndent(),
+                arrayOf(appointmentId.toString(), ownerId.toString())
+            )
+
+            if (updatedRows <= 0) {
+                throw IllegalStateException("No se pudo cancelar la cita")
+            }
+
+            db.setTransactionSuccessful()
+            true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        } finally {
+            db.endTransaction()
+        }
+    }
+
     private fun getOwnerIdByUserId(
         db: android.database.sqlite.SQLiteDatabase,
         userId: Long
