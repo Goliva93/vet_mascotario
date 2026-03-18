@@ -23,8 +23,8 @@ class LocalAuthManager (context : Context) {
         prefs.edit {
             putString(KEY_REGISTERED_NAME, name)
                 .putString(KEY_REGISTERED_EMAIL, email)
-                .putString(KEY_REGISTERED_PHONE, phone)
                 .putString(KEY_REGISTERED_PASSWORD, password)
+                .putString(KEY_REGISTERED_PHONE, phone)
             .apply()
         }
     }

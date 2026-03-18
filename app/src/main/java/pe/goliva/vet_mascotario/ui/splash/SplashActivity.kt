@@ -6,6 +6,7 @@ import android.os.Handler
 import android.os.Looper
 import androidx.appcompat.app.AppCompatActivity
 import pe.goliva.vet_mascotario.MainActivity
+import pe.goliva.vet_mascotario.data.db.DatabaseHelper
 import pe.goliva.vet_mascotario.databinding.ActivitySplashBinding
 import pe.goliva.vet_mascotario.ui.login.LoginActivity
 import pe.goliva.vet_mascotario.ui.onboarding.OnboardingActivity
@@ -24,7 +25,10 @@ class SplashActivity : AppCompatActivity() {
 
         sessionManager = SessionManager(this)
 
-
+        //acá se inicializa el SQLite
+        val dbHelper = DatabaseHelper(this)
+        val db = dbHelper.writableDatabase
+        //dbHelper.writableDatabase.close()
 
         Handler(Looper.getMainLooper()).postDelayed({
             val nextIntent = when {

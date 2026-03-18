@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import pe.goliva.vet_mascotario.MainActivity
+import pe.goliva.vet_mascotario.data.dao.AuthDao
 
 import pe.goliva.vet_mascotario.databinding.ActivityLoginBinding
 import pe.goliva.vet_mascotario.utils.LocalAuthManager
@@ -14,7 +15,8 @@ class LoginActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityLoginBinding
     private lateinit var sessionManager: SessionManager
-    private lateinit var localAuthManager: LocalAuthManager
+    private lateinit var authDao: AuthDao
+    //private lateinit var localAuthManager: LocalAuthManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -23,7 +25,8 @@ class LoginActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         sessionManager = SessionManager(this)
-        localAuthManager = LocalAuthManager(this)
+        //localAuthManager = LocalAuthManager(this)
+        authDao = AuthDao(this)
 
         binding.btnLogin.setOnClickListener {
             attemptLogin()
@@ -59,11 +62,13 @@ class LoginActivity : AppCompatActivity() {
 
         if(hasError) return
 
-        val isValid = localAuthManager.authenticate(email, password)
+        //val isValid = localAuthManager.authenticate(email, password)
+        val user = authDao.authenticate(email, password)
 
-        if (isValid){
-            val userId = localAuthManager.getUserIdByEmail(email)
-            sessionManager.saveLoginSession(userId,email)
+        if (user != null){
+
+            //val userId = localAuthManager.getUserIdByEmail(email)
+            sessionManager.saveLoginSession(user.userId,email)
             Toast.makeText(this, "Bienvenido", Toast.LENGTH_SHORT).show()
 
             startActivity(Intent(this, MainActivity::class.java))

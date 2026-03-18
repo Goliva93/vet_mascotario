@@ -4,6 +4,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import android.util.Log
 
 /**
  * DatabaseHelper
@@ -71,6 +72,9 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(
         db.execSQL(createNotificationTable())
 
         seedInitialData(db)
+
+        Log.d("DB_TEST", "onCreate ejecutado: base creada correctamente")
+
     }
 
     /**
@@ -745,6 +749,8 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(
         }
         return db.insert(DatabaseContract.OwnerTable.TABLE_NAME, null, values)
     }
+
+    //GOliva -> inser usuario demo
 
     private fun insertDemoUser(db: SQLiteDatabase, ownerId: Long): Long {
         val values = ContentValues().apply {

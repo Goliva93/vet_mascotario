@@ -7,7 +7,7 @@ package pe.goliva.vet_mascotario.data.db
 object DatabaseContract {
 
     // Nombre del archivo SQLite que se creará en el dispositivo
-    const val DATABASE_NAME = "el_mascotario.db"
+    const val DATABASE_NAME = "vet_mascotario.db"
 
     // Versión de la BD.
     // Cuando cambies estructura de tablas en el futuro, esta versión deberá subir.

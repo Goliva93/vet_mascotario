@@ -2,18 +2,17 @@ package pe.goliva.vet_mascotario.ui.login
 
 import android.os.Bundle
 import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import pe.goliva.vet_mascotario.R
+//import pe.goliva.vet_mascotario.R
+import pe.goliva.vet_mascotario.data.dao.AuthDao
 import pe.goliva.vet_mascotario.databinding.ActivityRegisterBinding
-import pe.goliva.vet_mascotario.utils.LocalAuthManager
+//import pe.goliva.vet_mascotario.utils.LocalAuthManager
 
 class RegisterActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityRegisterBinding
-    private lateinit var localAuthManager: LocalAuthManager
+    //private lateinit var localAuthManager: LocalAuthManager
+    private lateinit var authDao: AuthDao
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -21,7 +20,9 @@ class RegisterActivity : AppCompatActivity() {
         binding = ActivityRegisterBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        localAuthManager = LocalAuthManager(this)
+        //localAuthManager = LocalAuthManager(this)
+
+        authDao = AuthDao(this)
 
         binding.tvBack.setOnClickListener {
             finish()
@@ -70,8 +71,26 @@ class RegisterActivity : AppCompatActivity() {
 
         if(hasError) return
 
+        //register owner y user
+
+        val success = authDao.registerClientUser(
+            fullName = name,
+            email = email,
+            phone = phone,
+            password = password,
+            homeBranchId = 1L
+        )
+        if (success) {
+            Toast.makeText (this, "Cuenta registrada correctamente", Toast.LENGTH_SHORT).show()
+            finish()
+        } else {
+            Toast.makeText (this, "No se pudo Registrar el usuario", Toast.LENGTH_SHORT).show()
+        }
+
+        /**
         localAuthManager.registerUser(name, email, phone, password)
         Toast.makeText(this,"Cuenta registrada correctamente", Toast.LENGTH_SHORT).show()
         finish()
+        */
     }
 }

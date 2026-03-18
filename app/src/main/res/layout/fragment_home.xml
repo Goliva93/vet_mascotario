@@ -1,16 +1,95 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/bg_white">
 
-    <TextView
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:text="Home Fragment"
-        android:textColor="@color/text_dark"
-        android:textSize="22sp"
-        android:textStyle="bold" />
+        android:orientation="vertical"
+        android:padding="24dp">
 
-</FrameLayout>
+        <!-- Saludo principal -->
+        <TextView
+            android:id="@+id/tv_home_greeting"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Hola"
+            android:textSize="26sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_dark" />
+
+        <!-- Sede actual / sede preferida -->
+        <TextView
+            android:id="@+id/tv_home_branch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Sede:"
+            android:textSize="15sp"
+            android:textColor="@color/text_gray" />
+
+        <!-- Tarjeta destacada -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            app:cardCornerRadius="18dp"
+            app:cardElevation="2dp"
+            app:cardBackgroundColor="@color/green_light_bg">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Bienvenido a El Mascotario"
+                    android:textStyle="bold"
+                    android:textSize="18sp"
+                    android:textColor="@color/text_dark" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Desde aquí podrás gestionar tus mascotas, citas y perfil."
+                    android:textSize="14sp"
+                    android:textColor="@color/text_gray" />
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Accesos rápidos visuales -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_quick_appointments"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="24dp"
+            android:text="Ver mis citas"
+            android:textAllCaps="false"
+            android:textColor="@color/bg_white"
+            app:backgroundTint="@color/green_primary"
+            app:cornerRadius="14dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_quick_pets"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="12dp"
+            android:text="Ver mis mascotas"
+            android:textAllCaps="false"
+            android:textColor="@color/text_dark"
+            app:backgroundTint="@color/bg_white"
+            app:cornerRadius="14dp"
+            app:strokeColor="@color/btn_outline_border"
+            app:strokeWidth="1dp" />
+
+    </LinearLayout>
+
+</ScrollView>
