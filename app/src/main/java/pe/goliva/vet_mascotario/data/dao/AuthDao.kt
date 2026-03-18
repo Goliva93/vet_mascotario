@@ -6,18 +6,11 @@ import pe.goliva.vet_mascotario.data.db.DatabaseContract
 import pe.goliva.vet_mascotario.data.db.DatabaseHelper
 import pe.goliva.vet_mascotario.data.model.AuthUser
 
-/**
- * clase que se encargará de:
- *  - auth users
- *  - register users
- *  - verify exists emails
- */
-
-class AuthDao (context: Context){
+class AuthDao(context: Context) {
 
     private val dbHelper = DatabaseHelper(context)
 
-    fun authenticate (email: String, password: String): AuthUser? {
+    fun authenticate(email: String, password: String): AuthUser? {
         val db = dbHelper.readableDatabase
 
         val query = """
@@ -67,17 +60,56 @@ class AuthDao (context: Context){
         val db = dbHelper.readableDatabase
 
         val query = """
-            Select 1
-            from ${DatabaseContract.UserTable.TABLE_NAME}
-            where ${DatabaseContract.UserTable.COL_EMAIL} = ?
-            limit 1
+            SELECT 1
+            FROM ${DatabaseContract.UserTable.TABLE_NAME}
+            WHERE ${DatabaseContract.UserTable.COL_EMAIL} = ?
+            LIMIT 1
         """.trimIndent()
 
         val cursor = db.rawQuery(query, arrayOf(email))
         cursor.use {
             return it.moveToFirst()
         }
+    }
 
+    fun verifyCurrentPassword(userId: Long, currentPassword: String): Boolean {
+        val db = dbHelper.readableDatabase
+
+        val query = """
+            SELECT 1
+            FROM ${DatabaseContract.UserTable.TABLE_NAME}
+            WHERE ${DatabaseContract.UserTable.COL_USER_ID} = ?
+              AND ${DatabaseContract.UserTable.COL_PASSWORD_HASH} = ?
+              AND ${DatabaseContract.UserTable.COL_IS_ACTIVE} = 1
+            LIMIT 1
+        """.trimIndent()
+
+        val cursor = db.rawQuery(query, arrayOf(userId.toString(), currentPassword))
+        cursor.use {
+            return it.moveToFirst()
+        }
+    }
+
+    fun updatePassword(userId: Long, newPassword: String): Boolean {
+        val db = dbHelper.writableDatabase
+
+        return try {
+            val values = ContentValues().apply {
+                put(DatabaseContract.UserTable.COL_PASSWORD_HASH, newPassword)
+            }
+
+            val updatedRows = db.update(
+                DatabaseContract.UserTable.TABLE_NAME,
+                values,
+                "${DatabaseContract.UserTable.COL_USER_ID} = ? AND ${DatabaseContract.UserTable.COL_IS_ACTIVE} = 1",
+                arrayOf(userId.toString())
+            )
+
+            updatedRows > 0
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
     }
 
     fun registerClientUser(
@@ -107,7 +139,7 @@ class AuthDao (context: Context){
             if (ownerId == -1L) {
                 throw Exception("Error al registrar Owner")
             }
-            // if insert owner ok, procced to insert user
+
             val userValues = ContentValues().apply {
                 put(DatabaseContract.UserTable.COL_HOME_BRANCH_ID, homeBranchId)
                 put(DatabaseContract.UserTable.COL_OWNER_ID, ownerId)
@@ -125,9 +157,10 @@ class AuthDao (context: Context){
             if (userId == -1L) {
                 throw Exception("No se pudo registrar el usuario")
             }
+
             db.setTransactionSuccessful()
             true
-        } catch (e:Exception) {
+        } catch (e: Exception) {
             e.printStackTrace()
             false
         } finally {

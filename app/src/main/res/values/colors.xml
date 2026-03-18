@@ -24,4 +24,18 @@
     <color name="blue_primary">#7CB342</color>
     <color name="blue_light_bg">#E8F5E9</color>
     <color name="icon_dark_purple">#558B2F</color>
+
+    <color name="profile_avatar_icon">#5C3B8A</color>
+    <color name="profile_card_stroke">#E5E7EB</color>
+    <color name="profile_chip_bg">#F3F4F6</color>
+    <color name="profile_logout_border">#FCA5A5</color>
+
+    <color name="red_light_bg">#FEECEC</color>
+    <color name="notification_unread_dot">#7CB342</color>
+
+    <color name="home_featured_start">#7CB342</color>
+    <color name="home_featured_end">#689F38</color>
+    <color name="home_featured_text_soft">#E8F5E9</color>
+
+
 </resources>

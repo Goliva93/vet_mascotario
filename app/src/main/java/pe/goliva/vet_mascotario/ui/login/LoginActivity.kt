@@ -52,7 +52,7 @@ class LoginActivity : AppCompatActivity() {
         var hasError = false
 
         if(email.isBlank()){
-            binding.tilEmail.error = "Ingresa tu contraseña"
+            binding.tilEmail.error = "Ingresa tu correo"
             hasError = true
         }
         if(password.isBlank()){
