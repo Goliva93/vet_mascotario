@@ -1,56 +1,50 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true"
-    android:id="@+id/main"
-    android:background="@color/bg_white"
-    tools:context=".ui.login.LoginActivity">
+    android:background="@color/bg_white">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="24dp"
-        android:gravity="center_horizontal">
+        android:padding="24dp">
 
         <ImageView
-            android:id="@+id/iv_logo"
-            android:layout_width="140dp"
-            android:layout_height="140dp"
+            android:layout_width="120dp"
+            android:layout_height="120dp"
+            android:layout_gravity="center_horizontal"
             android:layout_marginTop="32dp"
-            android:layout_marginBottom="16dp"
             android:src="@mipmap/ic_logo_mascotario_round"
-            android:contentDescription="Logo El Mascotario" />
+            android:contentDescription="Logo" />
 
         <TextView
-            android:id="@+id/tv_greeting"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="¡Hola!"
-            android:textSize="36sp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="16dp"
+            android:text="Iniciar sesión"
+            android:textSize="26sp"
             android:textStyle="bold"
-            android:textColor="@color/text_dark"
-            android:layout_marginBottom="8dp" />
+            android:textColor="@color/text_dark" />
 
         <TextView
-            android:id="@+id/tv_subtitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Inicia sesión para continuar"
-            android:textSize="16sp"
-            android:textColor="@color/text_gray"
-            android:layout_marginBottom="32dp" />
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="8dp"
+            android:text="Ingresa con tu cuenta para continuar"
+            android:textSize="14sp"
+            android:textColor="@color/text_gray" />
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/til_email"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:hint="Correo electrónico *"
+            android:layout_marginTop="32dp"
+            android:hint="Correo electrónico"
             app:boxCornerRadiusTopStart="12dp"
             app:boxCornerRadiusTopEnd="12dp"
             app:boxCornerRadiusBottomStart="12dp"
@@ -61,17 +55,16 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="textEmailAddress" />
-
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/til_password"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Contraseña *"
-            app:passwordToggleEnabled="true"
-            app:passwordToggleTint="@color/text_gray"
+            android:layout_marginTop="16dp"
+            android:hint="Contraseña"
+            app:endIconMode="password_toggle"
             app:boxCornerRadiusTopStart="12dp"
             app:boxCornerRadiusTopEnd="12dp"
             app:boxCornerRadiusBottomStart="12dp"
@@ -82,7 +75,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="textPassword" />
-
         </com.google.android.material.textfield.TextInputLayout>
 
         <TextView
@@ -90,34 +82,45 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="end"
-            android:layout_marginTop="8dp"
-            android:layout_marginBottom="32dp"
+            android:layout_marginTop="12dp"
             android:text="¿Olvidaste tu contraseña?"
             android:textColor="@color/green_primary"
-            android:textSize="14sp"
-            android:textStyle="bold" />
+            android:textSize="14sp" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_login"
             android:layout_width="match_parent"
-            android:layout_height="56dp"
+            android:layout_height="48dp"
+            android:layout_marginTop="24dp"
             android:text="Ingresar"
-            android:textSize="16sp"
-            app:cornerRadius="14dp"
+            android:textAllCaps="false"
+            android:textColor="@color/bg_white"
             app:backgroundTint="@color/green_primary"
-            android:layout_marginBottom="16dp" />
+            app:cornerRadius="14dp" />
 
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/btn_register"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:id="@+id/btn_go_register"
             android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:text="Crear una cuenta"
+            android:layout_height="48dp"
+            android:layout_marginTop="12dp"
+            android:text="Unirme a la familia"
+            android:textAllCaps="false"
             android:textColor="@color/text_dark"
-            android:textSize="16sp"
+            app:backgroundTint="@color/bg_white"
             app:cornerRadius="14dp"
             app:strokeColor="@color/btn_outline_border"
             app:strokeWidth="1dp" />
 
+        <TextView
+            android:id="@+id/tv_demo_credentials"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="Demo: demo@mascotario.com / 123456"
+            android:textColor="@color/text_gray"
+            android:textSize="13sp"
+            android:gravity="center" />
+
     </LinearLayout>
+
 </ScrollView>
