@@ -65,6 +65,47 @@ class UserProfileDao(context: Context) {
         return null
     }
 
+    fun getActiveBranches(): List<BranchOption> {
+        val db = dbHelper.readableDatabase
+        val branches = mutableListOf<BranchOption>()
+
+        val query = """
+            SELECT
+                ${DatabaseContract.BranchTable.COL_BRANCH_ID},
+                ${DatabaseContract.BranchTable.COL_NAME},
+                ${DatabaseContract.BranchTable.COL_ADDRESS},
+                ${DatabaseContract.BranchTable.COL_PHONE}
+            FROM ${DatabaseContract.BranchTable.TABLE_NAME}
+            WHERE ${DatabaseContract.BranchTable.COL_IS_ACTIVE} = 1
+            ORDER BY ${DatabaseContract.BranchTable.COL_BRANCH_ID} ASC
+        """.trimIndent()
+
+        val cursor = db.rawQuery(query, null)
+
+        cursor.use {
+            while (it.moveToNext()) {
+                branches.add(
+                    BranchOption(
+                        branchId = it.getLong(it.getColumnIndexOrThrow(DatabaseContract.BranchTable.COL_BRANCH_ID)),
+                        name = it.getString(it.getColumnIndexOrThrow(DatabaseContract.BranchTable.COL_NAME)),
+                        address = if (it.isNull(it.getColumnIndexOrThrow(DatabaseContract.BranchTable.COL_ADDRESS))) {
+                            null
+                        } else {
+                            it.getString(it.getColumnIndexOrThrow(DatabaseContract.BranchTable.COL_ADDRESS))
+                        },
+                        phone = if (it.isNull(it.getColumnIndexOrThrow(DatabaseContract.BranchTable.COL_PHONE))) {
+                            null
+                        } else {
+                            it.getString(it.getColumnIndexOrThrow(DatabaseContract.BranchTable.COL_PHONE))
+                        }
+                    )
+                )
+            }
+        }
+
+        return branches
+    }
+
     fun emailExistsForAnotherUser(email: String, userId: Long): Boolean {
         val db = dbHelper.readableDatabase
 
@@ -152,47 +193,6 @@ class UserProfileDao(context: Context) {
         } finally {
             db.endTransaction()
         }
-    }
-
-    fun getActiveBranches(): List<BranchOption> {
-        val db = dbHelper.readableDatabase
-        val branches = mutableListOf<BranchOption>()
-
-        val query = """
-            SELECT
-                ${DatabaseContract.BranchTable.COL_BRANCH_ID},
-                ${DatabaseContract.BranchTable.COL_NAME},
-                ${DatabaseContract.BranchTable.COL_ADDRESS},
-                ${DatabaseContract.BranchTable.COL_PHONE}
-            FROM ${DatabaseContract.BranchTable.TABLE_NAME}
-            WHERE ${DatabaseContract.BranchTable.COL_IS_ACTIVE} = 1
-            ORDER BY ${DatabaseContract.BranchTable.COL_BRANCH_ID} ASC
-        """.trimIndent()
-
-        val cursor = db.rawQuery(query, null)
-
-        cursor.use {
-            while (it.moveToNext()) {
-                branches.add(
-                    BranchOption(
-                        branchId = it.getLong(it.getColumnIndexOrThrow(DatabaseContract.BranchTable.COL_BRANCH_ID)),
-                        name = it.getString(it.getColumnIndexOrThrow(DatabaseContract.BranchTable.COL_NAME)),
-                        address = if (it.isNull(it.getColumnIndexOrThrow(DatabaseContract.BranchTable.COL_ADDRESS))) {
-                            null
-                        } else {
-                            it.getString(it.getColumnIndexOrThrow(DatabaseContract.BranchTable.COL_ADDRESS))
-                        },
-                        phone = if (it.isNull(it.getColumnIndexOrThrow(DatabaseContract.BranchTable.COL_PHONE))) {
-                            null
-                        } else {
-                            it.getString(it.getColumnIndexOrThrow(DatabaseContract.BranchTable.COL_PHONE))
-                        }
-                    )
-                )
-            }
-        }
-
-        return branches
     }
 
     fun updatePreferredBranch(userId: Long, branchId: Long): Boolean {
