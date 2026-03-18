@@ -1,0 +1,402 @@
+Project ElMascotario {
+  database_type: "SQL Server"
+  Note: "Sistema web y aplicación móvil para la gestión de citas, servicios veterinarios, grooming, pagos y atenciones de la clínica veterinaria El Mascotario."
+}
+
+Table BRANCH {
+  BranchId int [pk, increment]
+  Name varchar(100) [not null]
+  Address varchar(200)
+  Phone varchar(30)
+  IsActive bit [not null, default: 1]
+  CreatedAt datetime [not null]
+
+  Note: "Sedes de la clínica veterinaria"
+}
+
+Table BRANCH_SETTING {
+  BranchId int [pk, not null]
+  CancelCutoffRule varchar(40) [not null, default: 'DAY_BEFORE_MIDNIGHT']
+  DepositAmount decimal(10,2) [not null, default: 5.00]
+  DepositRequired bit [not null, default: 1]
+  CreatedAt datetime [not null]
+
+  Note: "Configuración por sede"
+}
+
+Table ROLE {
+  RoleId int [pk, increment]
+  Code varchar(30) [not null, unique]
+  Name varchar(80) [not null]
+}
+
+Table OWNER {
+  OwnerId int [pk, increment]
+  DocType varchar(10)
+  DocNumber varchar(20)
+  FullName varchar(120) [not null]
+  Phone varchar(30)
+  Email varchar(120)
+  Address varchar(200)
+  IsActive bit [not null, default: 1]
+  CreatedAt datetime [not null]
+
+  Note: "Dueño o cliente de la mascota"
+}
+
+Table USUARIO {
+  UserId int [pk, increment]
+  HomeBranchId int
+  OwnerId int
+  FullName varchar(120) [not null]
+  Email varchar(120) [not null, unique]
+  Phone varchar(30)
+  PasswordHash varchar(255)
+  IsActive bit [not null, default: 1]
+  CreatedAt datetime [not null]
+  LastLoginAt datetime
+
+  Note: "Usuarios del sistema. Equivale a dbo.[User] en SQL Server"
+}
+
+Table USER_ROLE {
+  UserId int [not null]
+  RoleId int [not null]
+
+  indexes {
+    (UserId, RoleId) [pk]
+  }
+}
+
+Table USER_BRANCH_ACCESS {
+  UserId int [not null]
+  BranchId int [not null]
+  AccessLevel varchar(20) [not null, default: 'READ']
+  IsPrimary bit [not null, default: 0]
+  CreatedAt datetime [not null]
+
+  indexes {
+    (UserId, BranchId) [pk]
+  }
+
+  Note: "Permite acceso multisede a usuarios específicos"
+}
+
+Table SPECIES {
+  SpeciesId int [pk, increment]
+  Name varchar(50) [not null, unique]
+}
+
+Table BREED {
+  BreedId int [pk, increment]
+  SpeciesId int [not null]
+  Name varchar(80) [not null]
+}
+
+Table PET {
+  PetId int [pk, increment]
+  OwnerId int [not null]
+  Name varchar(80) [not null]
+  SpeciesId int [not null]
+  BreedId int
+  Sex char(1)
+  BirthDate date
+  Color varchar(60)
+  Notes varchar(500)
+  PhotoUrl varchar(500)
+  IsActive bit [not null, default: 1]
+  CreatedAt datetime [not null]
+
+  Note: "Mascotas registradas"
+}
+
+Table CHANNEL {
+  ChannelId int [pk, increment]
+  Code varchar(20) [not null, unique]
+  Name varchar(80) [not null]
+}
+
+Table APPOINTMENT_TYPE {
+  AppointmentTypeId int [pk, increment]
+  Code varchar(20) [not null, unique]
+  Name varchar(80) [not null]
+  DefaultDurationMin int [not null]
+}
+
+Table BRANCH_APPOINTMENT_CAPACITY {
+  BranchId int [not null]
+  AppointmentTypeId int [not null]
+  Capacity int [not null, default: 1]
+
+  indexes {
+    (BranchId, AppointmentTypeId) [pk]
+  }
+
+  Note: "Capacidad por sede y tipo de cita"
+}
+
+Table SERVICE_CATALOG {
+  ServiceId int [pk, increment]
+  Code varchar(30) [not null, unique]
+  Name varchar(120) [not null]
+  Category varchar(30) [not null]
+  BasePrice decimal(10,2) [not null, default: 0]
+  IsActive bit [not null, default: 1]
+
+  Note: "Catálogo de servicios"
+}
+
+Table SERVICE_DEPENDENCY {
+  ParentServiceId int [not null]
+  RequiredServiceId int [not null]
+
+  indexes {
+    (ParentServiceId, RequiredServiceId) [pk]
+  }
+
+  Note: "Dependencia entre servicios, por ejemplo Baño -> Corte"
+}
+
+Table APPOINTMENT {
+  AppointmentId int [pk, increment]
+  BranchId int [not null]
+  AppointmentTypeId int [not null]
+  ChannelId int [not null]
+  OwnerId int [not null]
+  PetId int [not null]
+  AssignedVetUserId int
+  AssignedGroomerUserId int
+  StartAt datetime [not null]
+  EndAt datetime [not null]
+  Status varchar(20) [not null, default: 'CONFIRMED']
+  Notes varchar(500)
+  RescheduledFromAppointmentId int
+  CancelReason varchar(200)
+  CancelledAt datetime
+  CancelledByUserId int
+  CreatedByUserId int
+  CreatedAt datetime [not null]
+  UpdatedAt datetime
+
+  Note: "Citas veterinarias y grooming"
+}
+
+Table APPOINTMENT_SERVICE {
+  AppointmentServiceId int [pk, increment]
+  AppointmentId int [not null]
+  ServiceId int [not null]
+  Quantity int [not null, default: 1]
+  UnitPrice decimal(10,2) [not null, default: 0]
+  Notes varchar(200)
+}
+
+Table APPOINTMENT_STATUS_HISTORY {
+  HistoryId int [pk, increment]
+  AppointmentId int [not null]
+  OldStatus varchar(20)
+  NewStatus varchar(20) [not null]
+  ChangedByUserId int
+  ChangedAt datetime [not null]
+  Comment varchar(200)
+}
+
+Table CLINICAL_VISIT {
+  VisitId int [pk, increment]
+  BranchId int [not null]
+  AppointmentId int
+  OwnerId int [not null]
+  PetId int [not null]
+  VetUserId int
+  VisitAt datetime [not null]
+  NotesPrivate text
+  SummaryForClient varchar(1000)
+  NotesForClient varchar(2000)
+  CreatedAt datetime [not null]
+
+  Note: "Atención clínica de la mascota"
+}
+
+Table VISIT_SERVICE_PERFORMED {
+  VisitServicePerformedId int [pk, increment]
+  VisitId int [not null]
+  ServiceId int
+  AppointmentServiceId int
+  Description varchar(200)
+  Quantity int [not null, default: 1]
+  IsVisibleToClient bit [not null, default: 1]
+  PerformedByUserId int
+  PerformedAt datetime
+}
+
+Table VISIT_FOLLOW_UP {
+  FollowUpId int [pk, increment]
+  VisitId int [not null]
+  RecommendedAppointmentTypeId int [not null]
+  RecommendedDate date
+  CreatedAppointmentId int
+  Notes varchar(200)
+  CreatedAt datetime [not null]
+}
+
+Table PAYMENT {
+  PaymentId int [pk, increment]
+  BranchId int [not null]
+  AppointmentId int [not null]
+  OwnerId int [not null]
+  Method varchar(20) [not null]
+  Status varchar(20) [not null, default: 'REGISTERED']
+  Amount decimal(10,2) [not null]
+  PaidAt datetime
+  RegisteredByUserId int
+  RegisteredAt datetime [not null]
+  ValidatedByUserId int
+  ValidatedAt datetime
+  VoidedByUserId int
+  VoidedAt datetime
+  VoidReason varchar(200)
+
+  Note: "Pagos parciales o totales asociados a la cita"
+}
+
+Table PAYMENT_ITEM {
+  PaymentItemId int [pk, increment]
+  PaymentId int [not null]
+  AppointmentServiceId int
+  ConceptName varchar(120) [not null]
+  Amount decimal(10,2) [not null]
+}
+
+Table PAYMENT_EVIDENCE {
+  EvidenceId int [pk, increment]
+  PaymentId int [not null]
+  FileUrl varchar(500) [not null]
+  FileName varchar(200)
+  ContentType varchar(100)
+  UploadedAt datetime [not null]
+  UploadedByUserId int
+}
+
+Table ATTACHMENT {
+  AttachmentId int [pk, increment]
+  FileUrl varchar(500) [not null]
+  FileName varchar(200)
+  ContentType varchar(100)
+  FileSizeBytes bigint
+  UploadedAt datetime [not null]
+  UploadedByUserId int
+}
+
+Table VISIT_ATTACHMENT {
+  VisitId int [not null]
+  AttachmentId int [not null]
+  IsVisibleToClient bit [not null, default: 0]
+  Description varchar(200)
+
+  indexes {
+    (VisitId, AttachmentId) [pk]
+  }
+}
+
+Table PET_ATTACHMENT {
+  PetId int [not null]
+  AttachmentId int [not null]
+  IsVisibleToClient bit [not null, default: 1]
+  Description varchar(200)
+
+  indexes {
+    (PetId, AttachmentId) [pk]
+  }
+}
+
+Table USER_ATTACHMENT {
+  UserId int [not null]
+  AttachmentId int [not null]
+  Description varchar(200)
+
+  indexes {
+    (UserId, AttachmentId) [pk]
+  }
+}
+
+/* =========================
+   RELACIONES
+   ========================= */
+
+Ref: BRANCH_SETTING.BranchId > BRANCH.BranchId
+
+Ref: USUARIO.HomeBranchId > BRANCH.BranchId
+Ref: USUARIO.OwnerId > OWNER.OwnerId
+
+Ref: USER_ROLE.UserId > USUARIO.UserId
+Ref: USER_ROLE.RoleId > ROLE.RoleId
+
+Ref: USER_BRANCH_ACCESS.UserId > USUARIO.UserId
+Ref: USER_BRANCH_ACCESS.BranchId > BRANCH.BranchId
+
+Ref: BREED.SpeciesId > SPECIES.SpeciesId
+
+Ref: PET.OwnerId > OWNER.OwnerId
+Ref: PET.SpeciesId > SPECIES.SpeciesId
+Ref: PET.BreedId > BREED.BreedId
+
+Ref: BRANCH_APPOINTMENT_CAPACITY.BranchId > BRANCH.BranchId
+Ref: BRANCH_APPOINTMENT_CAPACITY.AppointmentTypeId > APPOINTMENT_TYPE.AppointmentTypeId
+
+Ref: SERVICE_DEPENDENCY.ParentServiceId > SERVICE_CATALOG.ServiceId
+Ref: SERVICE_DEPENDENCY.RequiredServiceId > SERVICE_CATALOG.ServiceId
+
+Ref: APPOINTMENT.BranchId > BRANCH.BranchId
+Ref: APPOINTMENT.AppointmentTypeId > APPOINTMENT_TYPE.AppointmentTypeId
+Ref: APPOINTMENT.ChannelId > CHANNEL.ChannelId
+Ref: APPOINTMENT.OwnerId > OWNER.OwnerId
+Ref: APPOINTMENT.PetId > PET.PetId
+Ref: APPOINTMENT.AssignedVetUserId > USUARIO.UserId
+Ref: APPOINTMENT.AssignedGroomerUserId > USUARIO.UserId
+Ref: APPOINTMENT.RescheduledFromAppointmentId > APPOINTMENT.AppointmentId
+Ref: APPOINTMENT.CancelledByUserId > USUARIO.UserId
+Ref: APPOINTMENT.CreatedByUserId > USUARIO.UserId
+
+Ref: APPOINTMENT_SERVICE.AppointmentId > APPOINTMENT.AppointmentId
+Ref: APPOINTMENT_SERVICE.ServiceId > SERVICE_CATALOG.ServiceId
+
+Ref: APPOINTMENT_STATUS_HISTORY.AppointmentId > APPOINTMENT.AppointmentId
+Ref: APPOINTMENT_STATUS_HISTORY.ChangedByUserId > USUARIO.UserId
+
+Ref: CLINICAL_VISIT.BranchId > BRANCH.BranchId
+Ref: CLINICAL_VISIT.AppointmentId > APPOINTMENT.AppointmentId
+Ref: CLINICAL_VISIT.OwnerId > OWNER.OwnerId
+Ref: CLINICAL_VISIT.PetId > PET.PetId
+Ref: CLINICAL_VISIT.VetUserId > USUARIO.UserId
+
+Ref: VISIT_SERVICE_PERFORMED.VisitId > CLINICAL_VISIT.VisitId
+Ref: VISIT_SERVICE_PERFORMED.ServiceId > SERVICE_CATALOG.ServiceId
+Ref: VISIT_SERVICE_PERFORMED.AppointmentServiceId > APPOINTMENT_SERVICE.AppointmentServiceId
+Ref: VISIT_SERVICE_PERFORMED.PerformedByUserId > USUARIO.UserId
+
+Ref: VISIT_FOLLOW_UP.VisitId > CLINICAL_VISIT.VisitId
+Ref: VISIT_FOLLOW_UP.RecommendedAppointmentTypeId > APPOINTMENT_TYPE.AppointmentTypeId
+Ref: VISIT_FOLLOW_UP.CreatedAppointmentId > APPOINTMENT.AppointmentId
+
+Ref: PAYMENT.BranchId > BRANCH.BranchId
+Ref: PAYMENT.AppointmentId > APPOINTMENT.AppointmentId
+Ref: PAYMENT.OwnerId > OWNER.OwnerId
+Ref: PAYMENT.RegisteredByUserId > USUARIO.UserId
+Ref: PAYMENT.ValidatedByUserId > USUARIO.UserId
+Ref: PAYMENT.VoidedByUserId > USUARIO.UserId
+
+Ref: PAYMENT_ITEM.PaymentId > PAYMENT.PaymentId
+Ref: PAYMENT_ITEM.AppointmentServiceId > APPOINTMENT_SERVICE.AppointmentServiceId
+
+Ref: PAYMENT_EVIDENCE.PaymentId > PAYMENT.PaymentId
+Ref: PAYMENT_EVIDENCE.UploadedByUserId > USUARIO.UserId
+
+Ref: ATTACHMENT.UploadedByUserId > USUARIO.UserId
+
+Ref: VISIT_ATTACHMENT.VisitId > CLINICAL_VISIT.VisitId
+Ref: VISIT_ATTACHMENT.AttachmentId > ATTACHMENT.AttachmentId
+
+Ref: PET_ATTACHMENT.PetId > PET.PetId
+Ref: PET_ATTACHMENT.AttachmentId > ATTACHMENT.AttachmentId
+
+Ref: USER_ATTACHMENT.UserId > USUARIO.UserId
+Ref: USER_ATTACHMENT.AttachmentId > ATTACHMENT.AttachmentId

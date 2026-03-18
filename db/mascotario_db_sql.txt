@@ -1,0 +1,665 @@
+/* =========================================================
+   EL MASCOTARIO - SCRIPT UNIFICADO COMPLETO
+   SQL Server
+   ========================================================= */
+
+USE master;
+GO
+
+IF DB_ID('ElMascotarioDB') IS NOT NULL
+BEGIN
+    ALTER DATABASE ElMascotarioDB SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+    DROP DATABASE ElMascotarioDB;
+END
+GO
+
+CREATE DATABASE ElMascotarioDB;
+GO
+
+USE ElMascotarioDB;
+GO
+
+/* =========================================================
+   1) SEDES Y CONFIGURACIÓN
+   ========================================================= */
+CREATE TABLE dbo.Branch (
+    BranchId INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    Name NVARCHAR(100) NOT NULL,
+    Address NVARCHAR(200) NULL,
+    Phone NVARCHAR(30) NULL,
+    IsActive BIT NOT NULL CONSTRAINT DF_Branch_IsActive DEFAULT (1),
+    CreatedAt DATETIME2 NOT NULL CONSTRAINT DF_Branch_CreatedAt DEFAULT (SYSUTCDATETIME())
+);
+GO
+
+CREATE TABLE dbo.BranchSetting (
+    BranchId INT NOT NULL PRIMARY KEY,
+    CancelCutoffRule NVARCHAR(40) NOT NULL CONSTRAINT DF_BranchSetting_CancelCutoffRule DEFAULT ('DAY_BEFORE_MIDNIGHT'),
+    DepositAmount DECIMAL(10,2) NOT NULL CONSTRAINT DF_BranchSetting_DepositAmount DEFAULT (5.00),
+    DepositRequired BIT NOT NULL CONSTRAINT DF_BranchSetting_DepositRequired DEFAULT (1),
+    CreatedAt DATETIME2 NOT NULL CONSTRAINT DF_BranchSetting_CreatedAt DEFAULT (SYSUTCDATETIME()),
+    CONSTRAINT FK_BranchSetting_Branch FOREIGN KEY (BranchId) REFERENCES dbo.Branch(BranchId)
+);
+GO
+
+/* =========================================================
+   2) SEGURIDAD / USUARIOS / ROLES
+   ========================================================= */
+CREATE TABLE dbo.Role (
+    RoleId INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    Code NVARCHAR(30) NOT NULL UNIQUE,
+    Name NVARCHAR(80) NOT NULL
+);
+GO
+
+CREATE TABLE dbo.Owner (
+    OwnerId INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    DocType NVARCHAR(10) NULL,
+    DocNumber NVARCHAR(20) NULL,
+    FullName NVARCHAR(120) NOT NULL,
+    Phone NVARCHAR(30) NULL,
+    Email NVARCHAR(120) NULL,
+    Address NVARCHAR(200) NULL,
+    IsActive BIT NOT NULL CONSTRAINT DF_Owner_IsActive DEFAULT (1),
+    CreatedAt DATETIME2 NOT NULL CONSTRAINT DF_Owner_CreatedAt DEFAULT (SYSUTCDATETIME())
+);
+GO
+
+CREATE TABLE dbo.[User] (
+    UserId INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    HomeBranchId INT NULL,
+    OwnerId INT NULL,
+    FullName NVARCHAR(120) NOT NULL,
+    Email NVARCHAR(120) NOT NULL,
+    Phone NVARCHAR(30) NULL,
+    PasswordHash NVARCHAR(255) NULL,
+    IsActive BIT NOT NULL CONSTRAINT DF_User_IsActive DEFAULT (1),
+    CreatedAt DATETIME2 NOT NULL CONSTRAINT DF_User_CreatedAt DEFAULT (SYSUTCDATETIME()),
+    LastLoginAt DATETIME2 NULL,
+    RowVer ROWVERSION NOT NULL,
+    CONSTRAINT UQ_User_Email UNIQUE (Email),
+    CONSTRAINT FK_User_HomeBranch FOREIGN KEY (HomeBranchId) REFERENCES dbo.Branch(BranchId),
+    CONSTRAINT FK_User_Owner FOREIGN KEY (OwnerId) REFERENCES dbo.Owner(OwnerId)
+);
+GO
+
+CREATE UNIQUE INDEX UX_User_OwnerId_OneToOne
+ON dbo.[User](OwnerId)
+WHERE OwnerId IS NOT NULL;
+GO
+
+CREATE TABLE dbo.UserRole (
+    UserId INT NOT NULL,
+    RoleId INT NOT NULL,
+    CONSTRAINT PK_UserRole PRIMARY KEY (UserId, RoleId),
+    CONSTRAINT FK_UserRole_User FOREIGN KEY (UserId) REFERENCES dbo.[User](UserId),
+    CONSTRAINT FK_UserRole_Role FOREIGN KEY (RoleId) REFERENCES dbo.Role(RoleId)
+);
+GO
+
+CREATE TABLE dbo.UserBranchAccess (
+    UserId INT NOT NULL,
+    BranchId INT NOT NULL,
+    AccessLevel NVARCHAR(20) NOT NULL CONSTRAINT DF_UserBranchAccess_AccessLevel DEFAULT ('READ'),
+    IsPrimary BIT NOT NULL CONSTRAINT DF_UserBranchAccess_IsPrimary DEFAULT (0),
+    CreatedAt DATETIME2 NOT NULL CONSTRAINT DF_UserBranchAccess_CreatedAt DEFAULT (SYSUTCDATETIME()),
+    CONSTRAINT PK_UserBranchAccess PRIMARY KEY (UserId, BranchId),
+    CONSTRAINT FK_UserBranchAccess_User FOREIGN KEY (UserId) REFERENCES dbo.[User](UserId),
+    CONSTRAINT FK_UserBranchAccess_Branch FOREIGN KEY (BranchId) REFERENCES dbo.Branch(BranchId)
+);
+GO
+
+/* =========================================================
+   3) MASCOTAS
+   ========================================================= */
+CREATE TABLE dbo.Species (
+    SpeciesId INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    Name NVARCHAR(50) NOT NULL UNIQUE
+);
+GO
+
+CREATE TABLE dbo.Breed (
+    BreedId INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    SpeciesId INT NOT NULL,
+    Name NVARCHAR(80) NOT NULL,
+    CONSTRAINT FK_Breed_Species FOREIGN KEY (SpeciesId) REFERENCES dbo.Species(SpeciesId)
+);
+GO
+
+CREATE TABLE dbo.Pet (
+    PetId INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    OwnerId INT NOT NULL,
+    Name NVARCHAR(80) NOT NULL,
+    SpeciesId INT NOT NULL,
+    BreedId INT NULL,
+    Sex CHAR(1) NULL,
+    BirthDate DATE NULL,
+    Color NVARCHAR(60) NULL,
+    Notes NVARCHAR(500) NULL,
+    PhotoUrl NVARCHAR(500) NULL,
+    IsActive BIT NOT NULL CONSTRAINT DF_Pet_IsActive DEFAULT (1),
+    CreatedAt DATETIME2 NOT NULL CONSTRAINT DF_Pet_CreatedAt DEFAULT (SYSUTCDATETIME()),
+    CONSTRAINT FK_Pet_Owner FOREIGN KEY (OwnerId) REFERENCES dbo.Owner(OwnerId),
+    CONSTRAINT FK_Pet_Species FOREIGN KEY (SpeciesId) REFERENCES dbo.Species(SpeciesId),
+    CONSTRAINT FK_Pet_Breed FOREIGN KEY (BreedId) REFERENCES dbo.Breed(BreedId)
+);
+GO
+
+CREATE INDEX IX_Pet_OwnerId ON dbo.Pet(OwnerId);
+GO
+
+/* =========================================================
+   4) AGENDA / CITAS / SERVICIOS
+   ========================================================= */
+CREATE TABLE dbo.Channel (
+    ChannelId INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    Code NVARCHAR(20) NOT NULL UNIQUE,
+    Name NVARCHAR(80) NOT NULL
+);
+GO
+
+CREATE TABLE dbo.AppointmentType (
+    AppointmentTypeId INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    Code NVARCHAR(20) NOT NULL UNIQUE,
+    Name NVARCHAR(80) NOT NULL,
+    DefaultDurationMin INT NOT NULL
+);
+GO
+
+CREATE TABLE dbo.BranchAppointmentCapacity (
+    BranchId INT NOT NULL,
+    AppointmentTypeId INT NOT NULL,
+    Capacity INT NOT NULL CONSTRAINT DF_BranchAppointmentCapacity_Capacity DEFAULT (1),
+    CONSTRAINT PK_BranchAppointmentCapacity PRIMARY KEY (BranchId, AppointmentTypeId),
+    CONSTRAINT FK_BranchAppointmentCapacity_Branch FOREIGN KEY (BranchId) REFERENCES dbo.Branch(BranchId),
+    CONSTRAINT FK_BranchAppointmentCapacity_Type FOREIGN KEY (AppointmentTypeId) REFERENCES dbo.AppointmentType(AppointmentTypeId),
+    CONSTRAINT CK_BranchAppointmentCapacity_Capacity CHECK (Capacity >= 1)
+);
+GO
+
+CREATE TABLE dbo.ServiceCatalog (
+    ServiceId INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    Code NVARCHAR(30) NOT NULL UNIQUE,
+    Name NVARCHAR(120) NOT NULL,
+    Category NVARCHAR(30) NOT NULL,
+    BasePrice DECIMAL(10,2) NOT NULL CONSTRAINT DF_ServiceCatalog_BasePrice DEFAULT (0),
+    IsActive BIT NOT NULL CONSTRAINT DF_ServiceCatalog_IsActive DEFAULT (1)
+);
+GO
+
+CREATE TABLE dbo.ServiceDependency (
+    ParentServiceId INT NOT NULL,
+    RequiredServiceId INT NOT NULL,
+    CONSTRAINT PK_ServiceDependency PRIMARY KEY (ParentServiceId, RequiredServiceId),
+    CONSTRAINT FK_ServiceDependency_Parent FOREIGN KEY (ParentServiceId) REFERENCES dbo.ServiceCatalog(ServiceId),
+    CONSTRAINT FK_ServiceDependency_Required FOREIGN KEY (RequiredServiceId) REFERENCES dbo.ServiceCatalog(ServiceId)
+);
+GO
+
+CREATE TABLE dbo.Appointment (
+    AppointmentId INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    BranchId INT NOT NULL,
+    AppointmentTypeId INT NOT NULL,
+    ChannelId INT NOT NULL,
+    OwnerId INT NOT NULL,
+    PetId INT NOT NULL,
+
+    AssignedVetUserId INT NULL,
+    AssignedGroomerUserId INT NULL,
+
+    StartAt DATETIME2 NOT NULL,
+    EndAt DATETIME2 NOT NULL,
+
+    Status NVARCHAR(20) NOT NULL CONSTRAINT DF_Appointment_Status DEFAULT ('CONFIRMED'),
+    Notes NVARCHAR(500) NULL,
+
+    RescheduledFromAppointmentId INT NULL,
+    CancelReason NVARCHAR(200) NULL,
+    CancelledAt DATETIME2 NULL,
+    CancelledByUserId INT NULL,
+
+    CreatedByUserId INT NULL,
+    CreatedAt DATETIME2 NOT NULL CONSTRAINT DF_Appointment_CreatedAt DEFAULT (SYSUTCDATETIME()),
+    UpdatedAt DATETIME2 NULL,
+
+    CONSTRAINT FK_Appointment_Branch FOREIGN KEY (BranchId) REFERENCES dbo.Branch(BranchId),
+    CONSTRAINT FK_Appointment_Type FOREIGN KEY (AppointmentTypeId) REFERENCES dbo.AppointmentType(AppointmentTypeId),
+    CONSTRAINT FK_Appointment_Channel FOREIGN KEY (ChannelId) REFERENCES dbo.Channel(ChannelId),
+    CONSTRAINT FK_Appointment_Owner FOREIGN KEY (OwnerId) REFERENCES dbo.Owner(OwnerId),
+    CONSTRAINT FK_Appointment_Pet FOREIGN KEY (PetId) REFERENCES dbo.Pet(PetId),
+    CONSTRAINT FK_Appointment_AssignedVet FOREIGN KEY (AssignedVetUserId) REFERENCES dbo.[User](UserId),
+    CONSTRAINT FK_Appointment_AssignedGroomer FOREIGN KEY (AssignedGroomerUserId) REFERENCES dbo.[User](UserId),
+    CONSTRAINT FK_Appointment_RescheduledFrom FOREIGN KEY (RescheduledFromAppointmentId) REFERENCES dbo.Appointment(AppointmentId),
+    CONSTRAINT FK_Appointment_CancelledBy FOREIGN KEY (CancelledByUserId) REFERENCES dbo.[User](UserId),
+    CONSTRAINT FK_Appointment_CreatedBy FOREIGN KEY (CreatedByUserId) REFERENCES dbo.[User](UserId),
+    CONSTRAINT CK_Appointment_Time CHECK (EndAt > StartAt)
+);
+GO
+
+CREATE INDEX IX_Appointment_Branch_StartAt ON dbo.Appointment(BranchId, StartAt);
+CREATE INDEX IX_Appointment_Owner ON dbo.Appointment(OwnerId);
+CREATE INDEX IX_Appointment_Pet ON dbo.Appointment(PetId);
+CREATE INDEX IX_Appointment_Status ON dbo.Appointment(Status);
+GO
+
+CREATE TABLE dbo.AppointmentService (
+    AppointmentServiceId INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    AppointmentId INT NOT NULL,
+    ServiceId INT NOT NULL,
+    Quantity INT NOT NULL CONSTRAINT DF_AppointmentService_Quantity DEFAULT (1),
+    UnitPrice DECIMAL(10,2) NOT NULL CONSTRAINT DF_AppointmentService_UnitPrice DEFAULT (0),
+    Notes NVARCHAR(200) NULL,
+    CONSTRAINT FK_AppointmentService_Appointment FOREIGN KEY (AppointmentId) REFERENCES dbo.Appointment(AppointmentId),
+    CONSTRAINT FK_AppointmentService_Service FOREIGN KEY (ServiceId) REFERENCES dbo.ServiceCatalog(ServiceId)
+);
+GO
+
+CREATE INDEX IX_AppointmentService_AppointmentId ON dbo.AppointmentService(AppointmentId);
+GO
+
+CREATE TABLE dbo.AppointmentStatusHistory (
+    HistoryId INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    AppointmentId INT NOT NULL,
+    OldStatus NVARCHAR(20) NULL,
+    NewStatus NVARCHAR(20) NOT NULL,
+    ChangedByUserId INT NULL,
+    ChangedAt DATETIME2 NOT NULL CONSTRAINT DF_AppointmentStatusHistory_ChangedAt DEFAULT (SYSUTCDATETIME()),
+    Comment NVARCHAR(200) NULL,
+    CONSTRAINT FK_AppointmentStatusHistory_Appointment FOREIGN KEY (AppointmentId) REFERENCES dbo.Appointment(AppointmentId),
+    CONSTRAINT FK_AppointmentStatusHistory_User FOREIGN KEY (ChangedByUserId) REFERENCES dbo.[User](UserId)
+);
+GO
+
+/* =========================================================
+   5) ATENCIÓN / VISITAS
+   ========================================================= */
+CREATE TABLE dbo.ClinicalVisit (
+    VisitId INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    BranchId INT NOT NULL,
+    AppointmentId INT NULL,
+    OwnerId INT NOT NULL,
+    PetId INT NOT NULL,
+    VetUserId INT NULL,
+    VisitAt DATETIME2 NOT NULL CONSTRAINT DF_ClinicalVisit_VisitAt DEFAULT (SYSUTCDATETIME()),
+    NotesPrivate NVARCHAR(MAX) NULL,
+    SummaryForClient NVARCHAR(1000) NULL,
+    NotesForClient NVARCHAR(2000) NULL,
+    CreatedAt DATETIME2 NOT NULL CONSTRAINT DF_ClinicalVisit_CreatedAt DEFAULT (SYSUTCDATETIME()),
+    CONSTRAINT FK_ClinicalVisit_Branch FOREIGN KEY (BranchId) REFERENCES dbo.Branch(BranchId),
+    CONSTRAINT FK_ClinicalVisit_Appointment FOREIGN KEY (AppointmentId) REFERENCES dbo.Appointment(AppointmentId),
+    CONSTRAINT FK_ClinicalVisit_Owner FOREIGN KEY (OwnerId) REFERENCES dbo.Owner(OwnerId),
+    CONSTRAINT FK_ClinicalVisit_Pet FOREIGN KEY (PetId) REFERENCES dbo.Pet(PetId),
+    CONSTRAINT FK_ClinicalVisit_Vet FOREIGN KEY (VetUserId) REFERENCES dbo.[User](UserId)
+);
+GO
+
+CREATE INDEX IX_ClinicalVisit_Pet ON dbo.ClinicalVisit(PetId, VisitAt DESC);
+CREATE INDEX IX_ClinicalVisit_Appointment ON dbo.ClinicalVisit(AppointmentId);
+GO
+
+CREATE TABLE dbo.VisitServicePerformed (
+    VisitServicePerformedId INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    VisitId INT NOT NULL,
+    ServiceId INT NULL,
+    AppointmentServiceId INT NULL,
+    Description NVARCHAR(200) NULL,
+    Quantity INT NOT NULL CONSTRAINT DF_VisitServicePerformed_Quantity DEFAULT (1),
+    IsVisibleToClient BIT NOT NULL CONSTRAINT DF_VisitServicePerformed_IsVisible DEFAULT (1),
+    PerformedByUserId INT NULL,
+    PerformedAt DATETIME2 NULL,
+    CONSTRAINT FK_VisitServicePerformed_Visit FOREIGN KEY (VisitId) REFERENCES dbo.ClinicalVisit(VisitId),
+    CONSTRAINT FK_VisitServicePerformed_Service FOREIGN KEY (ServiceId) REFERENCES dbo.ServiceCatalog(ServiceId),
+    CONSTRAINT FK_VisitServicePerformed_AppointmentService FOREIGN KEY (AppointmentServiceId) REFERENCES dbo.AppointmentService(AppointmentServiceId),
+    CONSTRAINT FK_VisitServicePerformed_PerformedBy FOREIGN KEY (PerformedByUserId) REFERENCES dbo.[User](UserId)
+);
+GO
+
+CREATE TABLE dbo.VisitFollowUp (
+    FollowUpId INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    VisitId INT NOT NULL,
+    RecommendedAppointmentTypeId INT NOT NULL,
+    RecommendedDate DATE NULL,
+    CreatedAppointmentId INT NULL,
+    Notes NVARCHAR(200) NULL,
+    CreatedAt DATETIME2 NOT NULL CONSTRAINT DF_VisitFollowUp_CreatedAt DEFAULT (SYSUTCDATETIME()),
+    CONSTRAINT FK_VisitFollowUp_Visit FOREIGN KEY (VisitId) REFERENCES dbo.ClinicalVisit(VisitId),
+    CONSTRAINT FK_VisitFollowUp_AppointmentType FOREIGN KEY (RecommendedAppointmentTypeId) REFERENCES dbo.AppointmentType(AppointmentTypeId),
+    CONSTRAINT FK_VisitFollowUp_CreatedAppointment FOREIGN KEY (CreatedAppointmentId) REFERENCES dbo.Appointment(AppointmentId)
+);
+GO
+
+/* =========================================================
+   6) PAGOS
+   ========================================================= */
+CREATE TABLE dbo.Payment (
+    PaymentId INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    BranchId INT NOT NULL,
+    AppointmentId INT NOT NULL,
+    OwnerId INT NOT NULL,
+
+    Method NVARCHAR(20) NOT NULL,
+    Status NVARCHAR(20) NOT NULL CONSTRAINT DF_Payment_Status DEFAULT ('REGISTERED'),
+    Amount DECIMAL(10,2) NOT NULL,
+    PaidAt DATETIME2 NULL,
+
+    RegisteredByUserId INT NULL,
+    RegisteredAt DATETIME2 NOT NULL CONSTRAINT DF_Payment_RegisteredAt DEFAULT (SYSUTCDATETIME()),
+
+    ValidatedByUserId INT NULL,
+    ValidatedAt DATETIME2 NULL,
+
+    VoidedByUserId INT NULL,
+    VoidedAt DATETIME2 NULL,
+    VoidReason NVARCHAR(200) NULL,
+
+    CONSTRAINT FK_Payment_Branch FOREIGN KEY (BranchId) REFERENCES dbo.Branch(BranchId),
+    CONSTRAINT FK_Payment_Appointment FOREIGN KEY (AppointmentId) REFERENCES dbo.Appointment(AppointmentId),
+    CONSTRAINT FK_Payment_Owner FOREIGN KEY (OwnerId) REFERENCES dbo.Owner(OwnerId),
+    CONSTRAINT FK_Payment_RegisteredBy FOREIGN KEY (RegisteredByUserId) REFERENCES dbo.[User](UserId),
+    CONSTRAINT FK_Payment_ValidatedBy FOREIGN KEY (ValidatedByUserId) REFERENCES dbo.[User](UserId),
+    CONSTRAINT FK_Payment_VoidedBy FOREIGN KEY (VoidedByUserId) REFERENCES dbo.[User](UserId)
+);
+GO
+
+CREATE INDEX IX_Payment_Appointment ON dbo.Payment(AppointmentId);
+CREATE INDEX IX_Payment_Owner ON dbo.Payment(OwnerId);
+GO
+
+CREATE TABLE dbo.PaymentItem (
+    PaymentItemId INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    PaymentId INT NOT NULL,
+    AppointmentServiceId INT NULL,
+    ConceptName NVARCHAR(120) NOT NULL,
+    Amount DECIMAL(10,2) NOT NULL,
+    CONSTRAINT FK_PaymentItem_Payment FOREIGN KEY (PaymentId) REFERENCES dbo.Payment(PaymentId),
+    CONSTRAINT FK_PaymentItem_AppointmentService FOREIGN KEY (AppointmentServiceId) REFERENCES dbo.AppointmentService(AppointmentServiceId)
+);
+GO
+
+CREATE INDEX IX_PaymentItem_PaymentId ON dbo.PaymentItem(PaymentId);
+GO
+
+CREATE TABLE dbo.PaymentEvidence (
+    EvidenceId INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    PaymentId INT NOT NULL,
+    FileUrl NVARCHAR(500) NOT NULL,
+    FileName NVARCHAR(200) NULL,
+    ContentType NVARCHAR(100) NULL,
+    UploadedAt DATETIME2 NOT NULL CONSTRAINT DF_PaymentEvidence_UploadedAt DEFAULT (SYSUTCDATETIME()),
+    UploadedByUserId INT NULL,
+    CONSTRAINT FK_PaymentEvidence_Payment FOREIGN KEY (PaymentId) REFERENCES dbo.Payment(PaymentId),
+    CONSTRAINT FK_PaymentEvidence_UploadedBy FOREIGN KEY (UploadedByUserId) REFERENCES dbo.[User](UserId)
+);
+GO
+
+/* =========================================================
+   7) ADJUNTOS
+   ========================================================= */
+CREATE TABLE dbo.Attachment (
+    AttachmentId INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    FileUrl NVARCHAR(500) NOT NULL,
+    FileName NVARCHAR(200) NULL,
+    ContentType NVARCHAR(100) NULL,
+    FileSizeBytes BIGINT NULL,
+    UploadedAt DATETIME2 NOT NULL CONSTRAINT DF_Attachment_UploadedAt DEFAULT (SYSUTCDATETIME()),
+    UploadedByUserId INT NULL,
+    CONSTRAINT FK_Attachment_UploadedBy FOREIGN KEY (UploadedByUserId) REFERENCES dbo.[User](UserId)
+);
+GO
+
+CREATE TABLE dbo.VisitAttachment (
+    VisitId INT NOT NULL,
+    AttachmentId INT NOT NULL,
+    IsVisibleToClient BIT NOT NULL CONSTRAINT DF_VisitAttachment_IsVisible DEFAULT (0),
+    Description NVARCHAR(200) NULL,
+    CONSTRAINT PK_VisitAttachment PRIMARY KEY (VisitId, AttachmentId),
+    CONSTRAINT FK_VisitAttachment_Visit FOREIGN KEY (VisitId) REFERENCES dbo.ClinicalVisit(VisitId),
+    CONSTRAINT FK_VisitAttachment_Attachment FOREIGN KEY (AttachmentId) REFERENCES dbo.Attachment(AttachmentId)
+);
+GO
+
+CREATE TABLE dbo.PetAttachment (
+    PetId INT NOT NULL,
+    AttachmentId INT NOT NULL,
+    IsVisibleToClient BIT NOT NULL CONSTRAINT DF_PetAttachment_IsVisible DEFAULT (1),
+    Description NVARCHAR(200) NULL,
+    CONSTRAINT PK_PetAttachment PRIMARY KEY (PetId, AttachmentId),
+    CONSTRAINT FK_PetAttachment_Pet FOREIGN KEY (PetId) REFERENCES dbo.Pet(PetId),
+    CONSTRAINT FK_PetAttachment_Attachment FOREIGN KEY (AttachmentId) REFERENCES dbo.Attachment(AttachmentId)
+);
+GO
+
+CREATE TABLE dbo.UserAttachment (
+    UserId INT NOT NULL,
+    AttachmentId INT NOT NULL,
+    Description NVARCHAR(200) NULL,
+    CONSTRAINT PK_UserAttachment PRIMARY KEY (UserId, AttachmentId),
+    CONSTRAINT FK_UserAttachment_User FOREIGN KEY (UserId) REFERENCES dbo.[User](UserId),
+    CONSTRAINT FK_UserAttachment_Attachment FOREIGN KEY (AttachmentId) REFERENCES dbo.Attachment(AttachmentId)
+);
+GO
+
+/* =========================================================
+   8) NOTIFICACIONES / PUSH / PROMOCIONES
+   ========================================================= */
+CREATE TABLE dbo.NotificationChannel (
+    NotificationChannelId INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    Code NVARCHAR(20) NOT NULL UNIQUE,   -- EMAIL / SMS / IN_APP / PUSH
+    Name NVARCHAR(50) NOT NULL
+);
+GO
+
+CREATE TABLE dbo.NotificationType (
+    NotificationTypeId INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    Code NVARCHAR(50) NOT NULL UNIQUE,
+    Name NVARCHAR(100) NOT NULL,
+    IsMarketing BIT NOT NULL CONSTRAINT DF_NotificationType_IsMarketing DEFAULT (0),
+    IsActive BIT NOT NULL CONSTRAINT DF_NotificationType_IsActive DEFAULT (1)
+);
+GO
+
+CREATE TABLE dbo.NotificationTemplate (
+    NotificationTemplateId INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    NotificationTypeId INT NOT NULL,
+    NotificationChannelId INT NOT NULL,
+    TitleTemplate NVARCHAR(200) NULL,
+    BodyTemplate NVARCHAR(MAX) NOT NULL,
+    IsActive BIT NOT NULL CONSTRAINT DF_NotificationTemplate_IsActive DEFAULT (1),
+    CreatedAt DATETIME2 NOT NULL CONSTRAINT DF_NotificationTemplate_CreatedAt DEFAULT (SYSUTCDATETIME()),
+    CONSTRAINT FK_NotificationTemplate_Type FOREIGN KEY (NotificationTypeId) REFERENCES dbo.NotificationType(NotificationTypeId),
+    CONSTRAINT FK_NotificationTemplate_Channel FOREIGN KEY (NotificationChannelId) REFERENCES dbo.NotificationChannel(NotificationChannelId),
+    CONSTRAINT UQ_NotificationTemplate_Type_Channel UNIQUE (NotificationTypeId, NotificationChannelId)
+);
+GO
+
+CREATE TABLE dbo.NotificationPreference (
+    NotificationPreferenceId INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    UserId INT NOT NULL,
+    NotificationTypeId INT NOT NULL,
+    NotificationChannelId INT NOT NULL,
+    IsEnabled BIT NOT NULL CONSTRAINT DF_NotificationPreference_IsEnabled DEFAULT (1),
+    CreatedAt DATETIME2 NOT NULL CONSTRAINT DF_NotificationPreference_CreatedAt DEFAULT (SYSUTCDATETIME()),
+    CONSTRAINT FK_NotificationPreference_User FOREIGN KEY (UserId) REFERENCES dbo.[User](UserId),
+    CONSTRAINT FK_NotificationPreference_Type FOREIGN KEY (NotificationTypeId) REFERENCES dbo.NotificationType(NotificationTypeId),
+    CONSTRAINT FK_NotificationPreference_Channel FOREIGN KEY (NotificationChannelId) REFERENCES dbo.NotificationChannel(NotificationChannelId),
+    CONSTRAINT UQ_NotificationPreference_User_Type_Channel UNIQUE (UserId, NotificationTypeId, NotificationChannelId)
+);
+GO
+
+CREATE TABLE dbo.UserDeviceToken (
+    UserDeviceTokenId INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    UserId INT NOT NULL,
+    DeviceId NVARCHAR(120) NOT NULL,
+    Platform NVARCHAR(20) NOT NULL, -- ANDROID / WEB
+    PushToken NVARCHAR(500) NOT NULL,
+    IsActive BIT NOT NULL CONSTRAINT DF_UserDeviceToken_IsActive DEFAULT (1),
+    LastSeenAt DATETIME2 NULL,
+    CreatedAt DATETIME2 NOT NULL CONSTRAINT DF_UserDeviceToken_CreatedAt DEFAULT (SYSUTCDATETIME()),
+    CONSTRAINT FK_UserDeviceToken_User FOREIGN KEY (UserId) REFERENCES dbo.[User](UserId)
+);
+GO
+
+CREATE UNIQUE INDEX UX_UserDeviceToken_Device
+ON dbo.UserDeviceToken(DeviceId, PushToken);
+GO
+
+CREATE TABLE dbo.Notification (
+    NotificationId INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+
+    UserId INT NOT NULL,
+    OwnerId INT NULL,
+    AppointmentId INT NULL,
+    PaymentId INT NULL,
+    VisitId INT NULL,
+
+    NotificationTypeId INT NOT NULL,
+    NotificationChannelId INT NOT NULL,
+
+    Title NVARCHAR(200) NULL,
+    Message NVARCHAR(MAX) NOT NULL,
+    DestinationAddress NVARCHAR(200) NULL,
+
+    Status NVARCHAR(20) NOT NULL CONSTRAINT DF_Notification_Status DEFAULT ('PENDING'),
+    ScheduledAt DATETIME2 NULL,
+    SentAt DATETIME2 NULL,
+    DeliveredAt DATETIME2 NULL,
+    ReadAt DATETIME2 NULL,
+    FailedAt DATETIME2 NULL,
+
+    ErrorMessage NVARCHAR(500) NULL,
+    ExternalMessageId NVARCHAR(120) NULL,
+
+    CreatedByUserId INT NULL,
+    CreatedAt DATETIME2 NOT NULL CONSTRAINT DF_Notification_CreatedAt DEFAULT (SYSUTCDATETIME()),
+
+    CONSTRAINT FK_Notification_User FOREIGN KEY (UserId) REFERENCES dbo.[User](UserId),
+    CONSTRAINT FK_Notification_Owner FOREIGN KEY (OwnerId) REFERENCES dbo.Owner(OwnerId),
+    CONSTRAINT FK_Notification_Appointment FOREIGN KEY (AppointmentId) REFERENCES dbo.Appointment(AppointmentId),
+    CONSTRAINT FK_Notification_Payment FOREIGN KEY (PaymentId) REFERENCES dbo.Payment(PaymentId),
+    CONSTRAINT FK_Notification_Visit FOREIGN KEY (VisitId) REFERENCES dbo.ClinicalVisit(VisitId),
+    CONSTRAINT FK_Notification_Type FOREIGN KEY (NotificationTypeId) REFERENCES dbo.NotificationType(NotificationTypeId),
+    CONSTRAINT FK_Notification_Channel FOREIGN KEY (NotificationChannelId) REFERENCES dbo.NotificationChannel(NotificationChannelId),
+    CONSTRAINT FK_Notification_CreatedBy FOREIGN KEY (CreatedByUserId) REFERENCES dbo.[User](UserId)
+);
+GO
+
+CREATE INDEX IX_Notification_UserId ON dbo.Notification(UserId);
+CREATE INDEX IX_Notification_Status ON dbo.Notification(Status);
+CREATE INDEX IX_Notification_ScheduledAt ON dbo.Notification(ScheduledAt);
+CREATE INDEX IX_Notification_AppointmentId ON dbo.Notification(AppointmentId);
+CREATE INDEX IX_Notification_PaymentId ON dbo.Notification(PaymentId);
+CREATE INDEX IX_Notification_VisitId ON dbo.Notification(VisitId);
+GO
+
+CREATE TABLE dbo.NotificationCampaign (
+    NotificationCampaignId INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    Name NVARCHAR(150) NOT NULL,
+    Title NVARCHAR(200) NULL,
+    Message NVARCHAR(MAX) NOT NULL,
+    IsActive BIT NOT NULL CONSTRAINT DF_NotificationCampaign_IsActive DEFAULT (1),
+    ScheduledAt DATETIME2 NULL,
+    SentAt DATETIME2 NULL,
+    CreatedByUserId INT NULL,
+    CreatedAt DATETIME2 NOT NULL CONSTRAINT DF_NotificationCampaign_CreatedAt DEFAULT (SYSUTCDATETIME()),
+    CONSTRAINT FK_NotificationCampaign_CreatedBy FOREIGN KEY (CreatedByUserId) REFERENCES dbo.[User](UserId)
+);
+GO
+
+CREATE TABLE dbo.NotificationCampaignChannel (
+    NotificationCampaignId INT NOT NULL,
+    NotificationChannelId INT NOT NULL,
+    CONSTRAINT PK_NotificationCampaignChannel PRIMARY KEY (NotificationCampaignId, NotificationChannelId),
+    CONSTRAINT FK_NotificationCampaignChannel_Campaign FOREIGN KEY (NotificationCampaignId) REFERENCES dbo.NotificationCampaign(NotificationCampaignId),
+    CONSTRAINT FK_NotificationCampaignChannel_Channel FOREIGN KEY (NotificationChannelId) REFERENCES dbo.NotificationChannel(NotificationChannelId)
+);
+GO
+
+CREATE TABLE dbo.NotificationCampaignRecipient (
+    NotificationCampaignRecipientId INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    NotificationCampaignId INT NOT NULL,
+    UserId INT NOT NULL,
+    NotificationId INT NULL,
+    Status NVARCHAR(20) NOT NULL CONSTRAINT DF_NotificationCampaignRecipient_Status DEFAULT ('PENDING'),
+    CreatedAt DATETIME2 NOT NULL CONSTRAINT DF_NotificationCampaignRecipient_CreatedAt DEFAULT (SYSUTCDATETIME()),
+    CONSTRAINT FK_NotificationCampaignRecipient_Campaign FOREIGN KEY (NotificationCampaignId) REFERENCES dbo.NotificationCampaign(NotificationCampaignId),
+    CONSTRAINT FK_NotificationCampaignRecipient_User FOREIGN KEY (UserId) REFERENCES dbo.[User](UserId),
+    CONSTRAINT FK_NotificationCampaignRecipient_Notification FOREIGN KEY (NotificationId) REFERENCES dbo.Notification(NotificationId)
+);
+GO
+
+/* =========================================================
+   9) DATOS MAESTROS / SEEDS
+   ========================================================= */
+INSERT INTO dbo.Role (Code, Name)
+VALUES 
+('ADMIN','Administrador'),
+('RECEPTION','Recepción'),
+('VET','Veterinario'),
+('GROOMER','Groomer'),
+('CLIENT','Cliente');
+GO
+
+INSERT INTO dbo.Channel (Code, Name)
+VALUES
+('WHATSAPP','WhatsApp'),
+('COUNTER','Mostrador'),
+('WEB','Web'),
+('APP','App');
+GO
+
+INSERT INTO dbo.AppointmentType (Code, Name, DefaultDurationMin)
+VALUES
+('VET','Veterinaria',60),
+('GROOMING','Grooming',120),
+('CONTROL','Control',60);
+GO
+
+INSERT INTO dbo.Species (Name)
+VALUES
+('Perro'),
+('Gato');
+GO
+
+INSERT INTO dbo.NotificationChannel (Code, Name)
+VALUES
+('EMAIL', 'Correo electrónico'),
+('SMS', 'Mensaje de texto'),
+('IN_APP', 'Notificación interna'),
+('PUSH', 'Notificación push');
+GO
+
+INSERT INTO dbo.NotificationType (Code, Name, IsMarketing)
+VALUES
+('APPOINTMENT_CREATED', 'Cita creada', 0),
+('APPOINTMENT_REMINDER', 'Recordatorio de cita', 0),
+('APPOINTMENT_RESCHEDULED', 'Cita reprogramada', 0),
+('APPOINTMENT_CANCELLED', 'Cita cancelada', 0),
+('PAYMENT_REGISTERED', 'Pago registrado', 0),
+('PAYMENT_VALIDATED', 'Pago validado', 0),
+('FOLLOW_UP_REMINDER', 'Recordatorio de control', 0),
+('PROMOTION', 'Promoción general', 1),
+('PROMOTION_GROOMING', 'Promoción grooming', 1),
+('PROMOTION_VACCINATION', 'Promoción vacunación', 1);
+GO
+
+/* =========================================================
+   10) EJEMPLOS OPCIONALES DE CONFIGURACIÓN INICIAL
+   ========================================================= */
+/*
+-- Ejemplo de sedes
+INSERT INTO dbo.Branch (Name, Address, Phone)
+VALUES ('Chorrillos', 'Dirección sede Chorrillos', '999999999'),
+       ('Surco', 'Dirección sede Surco', '988888888');
+
+-- Configuración por sede
+INSERT INTO dbo.BranchSetting (BranchId)
+VALUES (1), (2);
+
+-- Capacidad por sede para cada tipo de cita
+INSERT INTO dbo.BranchAppointmentCapacity (BranchId, AppointmentTypeId, Capacity)
+SELECT 1, AppointmentTypeId, 1 FROM dbo.AppointmentType;
+
+INSERT INTO dbo.BranchAppointmentCapacity (BranchId, AppointmentTypeId, Capacity)
+SELECT 2, AppointmentTypeId, 1 FROM dbo.AppointmentType;
+*/
+GO
